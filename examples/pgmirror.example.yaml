@@ -1,0 +1,58 @@
+# Copy this to pgmirror.yaml and adjust. Passwords never live here: each
+# connection names the environment variable that holds its password.
+
+destination:
+  host: localhost
+  port: 5432
+  dbname: warehouse
+  user: etl_writer
+  password_env: WAREHOUSE_PASSWORD
+  schema: raw            # where the mirror tables live
+  state_schema: etl      # where etl_state and etl_run_log live (`pgmirror init`)
+
+sources:
+  north:
+    host: 10.0.0.11
+    dbname: erp
+    user: reader         # a read-only role is enough; sessions are opened read-only anyway
+    password_env: NORTH_PASSWORD
+    # This database also holds rows of companies that are not its own. Copy
+    # only its own, in every table that has a company_id column.
+    row_filter:
+      column: company_id
+      values: [1, 2]
+
+  south:
+    host: 10.0.0.12
+    dbname: erp
+    user: reader
+    password_env: SOUTH_PASSWORD
+    row_filter:
+      column: company_id
+      values: [3]
+
+tables:
+  # Sales: high volume, append-mostly, but cancelled up to a few days later.
+  - name: sale_item
+    mode: incremental
+    watermark_column: issued_at
+    overlap_days: 7
+    initial_watermark: "2024-01-01"
+
+  - name: payable
+    mode: incremental
+    watermark_column: issued_at
+    overlap_days: 30       # finance corrects older entries than the store does
+    initial_watermark: "2024-01-01"
+
+  # Stock: small enough to replace whole, changes all day long.
+  - name: stock
+    mode: full
+    schedule: overnight
+
+  # Customers are shared: the north database is the registry for everyone.
+  - name: customer
+    mode: full
+    schedule: overnight
+    row_filter_by_source:
+      north: null          # no filter on north; south keeps its own
