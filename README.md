@@ -41,8 +41,7 @@ There is one exception, and it is declared rather than hidden: `row_filter`
 copy*; it never rewrites *what came*. It lives in the config, next to the reason,
 where anyone can review it.
 
-Longer write-up (Portuguese): *A cópia estava perfeita. A soma, não.* — link
-after publication.
+Longer write-up (Portuguese): [*A cópia estava perfeita. A soma, não.*](https://www.linkedin.com/pulse/c%C3%B3pia-estava-perfeita-soma-n%C3%A3o-bernardo-beilfuss-v0vsf/)
 
 ## What it does — and does not
 
